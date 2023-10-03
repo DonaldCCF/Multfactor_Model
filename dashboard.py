@@ -7,8 +7,6 @@ tickers = pd.read_html(
     'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0].Symbol.to_list()
 
 data = yf.download('AAPL', start='2010-01-01', interval='1mo')
-
-# data = yf.download(tickers.Symbol.to_list(),'2021-1-1','2021-7-12', auto_adjust=True)['Close']
 # print(data.head())
 
 def get_f_score(ticker='AAPL', years=20):
@@ -78,5 +76,7 @@ for ticker in tickers[:10]:
     f_score = get_f_score(ticker)
     f_scores.append(f_score)
 
-df = pd.DataFrame(f_scores).T
-df.fillna(method='ffill', limit=10, inplace=True)
+F_Scores = pd.DataFrame(f_scores).T
+F_Scores.fillna(method='ffill', limit=10, inplace=True)
+
+Price_Data = yf.download(tickers, F_Scores.index[0], F_Scores.index[-1] + pd.DateOffset(months=1) + pd.DateOffset(days=1),interval='1mo', auto_adjust=True)['Close']
