@@ -1,5 +1,5 @@
 import requests
-
+import pandas as pd
 
 class IEXStock:
 
@@ -36,31 +36,35 @@ class IEXStock:
 
         return r.json()
 
-    def get_fundamentals(self, period='quarterly', last=4):
+    def get_fundamentals(self, period='quarterly', last=80):
         url = f"{self.BASE_URL}/time-series/fundamentals/{self.symbol}/{period}?last={last}&token={self.token}"
         r = requests.get(url)
+        df_f = pd.DataFrame(r.json())
+        df_f.index = pd.to_datetime(df_f.reportDate)
+        return df_f
 
-        return r.json()
-
-    def get_income_statement(self, period='quarterly', last=4):
+    def get_income_statement(self, period='quarterly', last=80):
         url = f"{self.BASE_URL}/time-series/income/{self.symbol}/{period}?last={last}&token={self.token}"
         r = requests.get(url)
+        df_is = pd.DataFrame(r.json())
+        df_is.index = pd.to_datetime(df_is.reportDate)
+        return df_is
 
-        return r.json()
-
-    def get_balance_sheet(self, period='quarterly', last=4):
+    def get_balance_sheet(self, period='quarterly', last=80):
         url = f"{self.BASE_URL}/time-series/balance_sheet/{self.symbol}/{period}?last={last}&token={self.token}"
         r = requests.get(url)
+        df_bs = pd.DataFrame(r.json())
+        df_bs.index = pd.to_datetime(df_bs.reportDate)
+        return df_bs
 
-        return r.json()
-
-    def get_cash_flow(self, period='quarterly', last=4):
+    def get_cash_flow(self, period='quarterly', last=80):
         url = f"{self.BASE_URL}/time-series/cash_flow/{self.symbol}/{period}?last={last}&token={self.token}"
         r = requests.get(url)
+        df_cf = pd.DataFrame(r.json())
+        df_cf.index = pd.to_datetime(df_cf.reportDate)
+        return df_cf
 
-        return r.json()
-
-    def get_fundamental_valuations(self, frequency='ttm', last=4):
+    def get_fundamental_valuations(self, frequency='ttm', last=80):
         url = f"{self.BASE_URL}/time-series/fundamental_valuations/{self.symbol}/{frequency}?last={last}&token={self.token}"
         r = requests.get(url)
 
