@@ -1,12 +1,19 @@
+import matplotlib.pyplot as plt
 import config, json
 from iex import IEXStock
 import pandas as pd
 import yfinance as yf
+import itertools
 
-tickers = pd.read_html(
-    'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0].Symbol.to_list()
+url = 'https://www.indmoney.com/us-stocks/all'
+tickers = pd.read_json(url)
+
+items_to_remove = ['GOOG', 'AON', 'BRK.B', 'NWS', 'BF.B']
+tickers = [ticker for ticker in tickers if ticker not in items_to_remove]
 
 data = yf.download('AAPL', start='2010-01-01', interval='1mo')
+
+
 # print(data.head())
 
 class Stock:
@@ -28,7 +35,8 @@ class Stock:
         merged_df['ROA'] = merged_df.netIncome.rolling(window=4).sum() / merged_df.totalAssets_avg
         merged_df['ΔROA'] = merged_df['ROA'].diff()
         merged_df['CFOA'] = merged_df.cashFlow / merged_df.totalAssets_avg
-        merged_df['ACCRUAL'] = (merged_df.operatingIncome.rolling(window=4).sum() - merged_df.cashFlow.rolling(window=4).sum()) / merged_df.totalAssets_avg
+        merged_df['ACCRUAL'] = (merged_df.operatingIncome.rolling(window=4).sum() - merged_df.cashFlow.rolling(
+            window=4).sum()) / merged_df.totalAssets_avg
         merged_df['ΔLEVER'] = (merged_df.longTermDebt / merged_df.totalAssets).diff()
         merged_df['ΔLIQUID'] = (merged_df.currentAssets / merged_df.totalCurrentLiabilities).diff()
         merged_df['EQ_OFFER'] = merged_df.sharesIssued.diff(periods=4)
@@ -68,19 +76,84 @@ class Stock:
         bs = bs.resample('MS').first()
         bs = bs.ffill()
         bs = bs.rename(columns={'netTangibleAssets': ticker})
-        return bs
+        return bs[ticker]
+
 
 f_scores = []
-netAssets = []
 
-for ticker in tickers[:10]:
-    stock = Stock(symbol=ticker)
-    f_score = stock.get_f_score()
-    netAsset = stock.get_netAssets()
-    f_scores.append(f_score)
-    netAssets.append(netAsset)
+for ticker in tickers[:]:
+    print(ticker)
+    try:
+        stock = Stock(symbol=ticker)
+        f_score = stock.get_f_score()
+        f_scores.append(f_score)
+    except Exception as e:
+        print(e)
 
 F_Scores = pd.DataFrame(f_scores).T
 F_Scores.fillna(method='ffill', limit=10, inplace=True)
+F_Scores = F_Scores.loc['2013-06-01':]
 
-Price_Data = yf.download(tickers, F_Scores.index[0], F_Scores.index[-1] + pd.DateOffset(months=1) + pd.DateOffset(days=1),interval='1mo', auto_adjust=True)['Close']
+# nan_counts = F_Scores.isna().sum(axis=1)
+
+Price_Data = \
+    yf.download(tickers, F_Scores.index[0], F_Scores.index[-1] + pd.DateOffset(months=1) + pd.DateOffset(days=1),
+                interval='1mo', auto_adjust=True)['Close']
+
+Returns = Price_Data.pct_change().shift(1)
+Returns = Returns.loc['2013-06-01':]
+
+Group_F = ['Low', 'Middle', 'High']
+Group_S = ['Loser', 'P2', 'P3', 'P4', 'Winner']
+combinations = list(itertools.product(Group_F, Group_S))
+Group_Return = {combo: [] for combo in combinations}
+
+for i in range(len(Returns) - 1):
+    str_stocks_dict = {}
+    str_groups = pd.qcut(Returns.iloc[i], 5, labels=Group_S)
+    grouped_stocks = Returns.iloc[i].groupby(str_groups)
+    for group, stocks in grouped_stocks:
+        str_stocks_dict[group] = stocks.index.tolist()
+
+    f_stocks_dict = {}
+    bins = [-1, 3, 6, 9]
+    f_groups = pd.cut(F_Scores.iloc[i], bins, labels=Group_F)
+    grouped_stocks = F_Scores.iloc[i].groupby(f_groups)
+    for group, stocks in grouped_stocks:
+        f_stocks_dict[group] = stocks.index.tolist()
+
+    f_stocks_df = pd.DataFrame.from_dict(f_stocks_dict, orient='index').transpose()
+    str_stocks_df = pd.DataFrame.from_dict(str_stocks_dict, orient='index').transpose()
+
+    f_stocks_df = f_stocks_df.melt(var_name='Group', value_name='Stock').dropna()
+    str_stocks_df = str_stocks_df.melt(var_name='Group', value_name='Stock').dropna()
+
+    merged_df = pd.merge(f_stocks_df, str_stocks_df, on='Stock', how='outer', suffixes=('_F', '_S'))
+    merged_df.reset_index(drop=True, inplace=True)
+    merged_df = merged_df.dropna()
+
+    for combo in combinations:
+        group_f, group_s = combo
+        groups = merged_df['Stock'][(merged_df['Group_F'] == group_f) & (merged_df['Group_S'] == group_s)].to_list()
+        Group_Return[combo].append(Returns.iloc[i+1][groups].mean())
+
+mean_values = {key: np.mean(value) for key, value in Group_Return.items()}
+
+keys = list(mean_values.keys())
+values = list(mean_values.values())
+
+# Plotting
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Create bar chart
+ax.bar(range(len(keys)), values)
+
+ax.set_xlabel('Groups and Categories')
+ax.set_ylabel('Mean Values')
+ax.set_title('Mean Group Return Values')
+ax.set_xticks(range(len(keys)))
+ax.set_xticklabels(keys, rotation=45)
+
+# Show the plot
+plt.tight_layout()
+plt.show()
