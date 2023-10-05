@@ -9,7 +9,6 @@
 * [Abstract](#abstract)
 * [Introduction](#introduction)
 * [Data](#data)
-    * [Stock Pool](#stock-pool)
 * [Main Results](#main-results)
 * [Performance Evaluation](#performance-evaluation)
 * [Conclusion](#conclusion)
@@ -25,7 +24,6 @@
 
 # **Data**
 
-## **Stock Pool**
 The original Stock Pool comprises companies listed in the S&P 500 index, representing a broad spectrum of the U.S. stock market.
     Mega (>$200B) Large ($10B-$200B) Medium ($2B-$10B)
 
