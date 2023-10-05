@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 import config, json
 from iex import IEXStock
 import pandas as pd
@@ -130,22 +132,16 @@ for i in range(len(Returns) - 1):
         Group_Return[combo].append(Returns.iloc[i+1][groups].mean())
 
 mean_values = {key: np.mean(value) for key, value in Group_Return.items()}
+values = np.array(list(mean_values.values()))*100
+values = values.reshape((3, 5)).T
 
-keys = list(mean_values.keys())
-values = list(mean_values.values())
+left_minus_right = values[:, 2] - values[:, 0]
+new_values = np.column_stack((values, left_minus_right))
 
-# Plotting
-fig, ax = plt.subplots(figsize=(10, 6))
+low_minus_winner = values[0, :] - values[4, :]
+new_values = np.row_stack((new_values, np.append(low_minus_winner, [np.nan])))
 
-# Create bar chart
-ax.bar(range(len(keys)), values)
-
-ax.set_xlabel('Groups and Categories')
-ax.set_ylabel('Mean Values')
-ax.set_title('Mean Group Return Values')
-ax.set_xticks(range(len(keys)))
-ax.set_xticklabels(keys, rotation=45)
-
-# Show the plot
-plt.tight_layout()
+plt.figure(figsize=(10, 6))
+sns.heatmap(new_values, annot=True, fmt=".3f", cmap="YlGnBu", xticklabels=Group_F + ['H-L'], yticklabels=Group_S + ['L-W'])
 plt.show()
+
