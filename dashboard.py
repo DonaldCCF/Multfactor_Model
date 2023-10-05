@@ -8,7 +8,7 @@ import yfinance as yf
 import itertools
 
 url = 'https://www.indmoney.com/us-stocks/all'
-tickers = pd.read_csv('mid-mega_stocks.csv')
+tickers = pd.read_csv('medium_stocks.csv')
 
 class Stock:
     def __init__(self, symbol):
@@ -25,6 +25,7 @@ class Stock:
         merged_df = merged_df[~merged_df.index.duplicated(keep='first')]
         merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()]
         merged_df = merged_df.copy()
+
         merged_df['totalAssets_avg'] = merged_df.totalAssets.rolling(window=4).mean()
         merged_df['ROA'] = merged_df.netIncome.rolling(window=4).sum() / merged_df.totalAssets_avg
         merged_df['ΔROA'] = merged_df['ROA'].diff()
@@ -84,20 +85,22 @@ for ticker in tickers.Symbol.to_list():
     except Exception as e:
         print(e)
 
+
+# F_Scores = pd.read_csv('mid-mega-F_Scores.csv', index_col=0, parse_dates=True)
 F_Scores = pd.DataFrame(f_scores).T
 F_Scores.fillna(method='ffill', limit=10, inplace=True)
 F_Scores = F_Scores.loc['2013-06-01':]
 
 # nan_counts = F_Scores.isna().sum(axis=1)
 
-Price_Data = \
-    yf.download(F_Scores.columns.to_list(), F_Scores.index[0] - pd.DateOffset(months=2), F_Scores.index[-1] + pd.DateOffset(months=1) + pd.DateOffset(days=1),
-                interval='1mo', auto_adjust=True)['Close']
+Price_Data = yf.download(F_Scores.columns.to_list(), F_Scores.index[0] - pd.DateOffset(months=2), F_Scores.index[-1] +
+                         pd.DateOffset(months=1) + pd.DateOffset(days=1), interval='1mo', auto_adjust=True)['Close']
 
 Returns = Price_Data.pct_change().shift(1)
 Returns = Returns.loc['2013-06-01':]
 
 Group_F = ['Low', 'Middle', 'High']
+#  Group_F = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 Group_S = ['Loser', 'P2', 'P3', 'P4', 'Winner']
 combinations = list(itertools.product(Group_F, Group_S))
 Group_Return = {combo: [] for combo in combinations}
@@ -113,8 +116,11 @@ for i in range(len(Returns) - 1):
     bins = [-1, 3, 6, 9]
     f_groups = pd.cut(F_Scores.iloc[i], bins, labels=Group_F)
     grouped_stocks = F_Scores.iloc[i].groupby(f_groups)
+    # grouped_stocks = pd.DataFrame(F_Scores.iloc[i])
+    # grouped_stocks.columns = ['values']
+    # grouped_stocks = grouped_stocks.groupby('values')
     for group, stocks in grouped_stocks:
-        f_stocks_dict[group] = stocks.index.tolist()
+        f_stocks_dict[Group_F[int(group)]] = stocks.index.tolist()
 
     f_stocks_df = pd.DataFrame.from_dict(f_stocks_dict, orient='index').transpose()
     str_stocks_df = pd.DataFrame.from_dict(str_stocks_dict, orient='index').transpose()
@@ -131,9 +137,9 @@ for i in range(len(Returns) - 1):
         groups = merged_df['Stock'][(merged_df['Group_F'] == group_f) & (merged_df['Group_S'] == group_s)].to_list()
         Group_Return[combo].append(Returns.iloc[i+1][groups].mean())
 
-mean_values = {key: np.mean(value) for key, value in Group_Return.items()}
+mean_values = {key: np.mean([x for x in value if x is not np.nan]) for key, value in Group_Return.items()}
 values = np.array(list(mean_values.values()))*100
-values = values.reshape((3, 5)).T
+values = values.reshape((10, 5)).T
 
 left_minus_right = values[:, 2] - values[:, 0]
 new_values = np.column_stack((values, left_minus_right))
@@ -142,6 +148,12 @@ low_minus_winner = values[0, :] - values[4, :]
 new_values = np.row_stack((new_values, np.append(low_minus_winner, [np.nan])))
 
 plt.figure(figsize=(10, 6))
-sns.heatmap(new_values, annot=True, fmt=".3f", cmap="YlGnBu", xticklabels=Group_F + ['H-L'], yticklabels=Group_S + ['L-W'])
+sns.heatmap(values, annot=True, fmt=".3f", cmap="gray", xticklabels=Group_F, yticklabels=Group_S, cbar=False)
 plt.show()
 
+for combo in combinations:
+    if combo[1] == 'Loser':
+        plt.plot((1+pd.Series(Group_Return[combo], index=F_Scores.index[:-1])).cumprod(), label=combo)
+        plt.legend()
+        plt.show()
+        plt.pause(1)
