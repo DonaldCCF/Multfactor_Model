@@ -6,24 +6,24 @@
 # **Table of contents**
 
 <!--ts-->
+* [Abstract](#abstract)
 * [Introduction](#introduction)
-* [Alpha Factor Finding & Selection](#alpha-factor-finding&selection)
-* [Data Source](#data-source)
+* [Data](#data)
     * [Stock Pool](#stock-pool)
-* [Portfolio Optimization](#portfolio-optimization)
-* [Factor Timing](#factor-timing)
-    * [Strategy Selection](#strategy-selection)
+* [Main Results](#main-results)
+* [Performance Evaluation](#performance-evaluation)
+* [Conclusion](#conclusion)
 * [Reference](#reference)
 <!--te-->
 
 
 <br/>
 
+# **Abstract**
+
 # **Introduction**
 
-# **Alpha Factor Finding & Selection**
-
-# **Data Source**
+# **Data**
 
 ## **Stock Pool**
 The original Stock Pool comprises companies listed in the S&P 500 index, representing a broad spectrum of the U.S. stock market.
@@ -42,3 +42,9 @@ The Stock Pool has been refined based on specific criteria to narrow down the se
 
 3. **Long-term Underperformance**:
    Companies that have demonstrated consistent underperformance relative to the broader market over an extended period.
+
+# **Main Results**
+
+# **Performance Evaluation**
+
+# **Conclusion**

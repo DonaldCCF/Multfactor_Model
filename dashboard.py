@@ -7,8 +7,7 @@ import pandas as pd
 import yfinance as yf
 import itertools
 
-url = 'https://www.indmoney.com/us-stocks/all'
-tickers = pd.read_csv('medium_stocks.csv')
+tickers = pd.read_csv('stock_list.csv')
 
 class Stock:
     def __init__(self, symbol):
