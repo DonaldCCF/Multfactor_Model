@@ -6,15 +6,7 @@ import yfinance as yf
 import itertools
 
 url = 'https://www.indmoney.com/us-stocks/all'
-tickers = pd.read_json(url)
-
-items_to_remove = ['GOOG', 'AON', 'BRK.B', 'NWS', 'BF.B']
-tickers = [ticker for ticker in tickers if ticker not in items_to_remove]
-
-data = yf.download('AAPL', start='2010-01-01', interval='1mo')
-
-
-# print(data.head())
+tickers = pd.read_csv('mid-mega_stocks.csv')
 
 class Stock:
     def __init__(self, symbol):
@@ -81,7 +73,7 @@ class Stock:
 
 f_scores = []
 
-for ticker in tickers[:]:
+for ticker in tickers.Symbol.to_list():
     print(ticker)
     try:
         stock = Stock(symbol=ticker)
@@ -97,7 +89,7 @@ F_Scores = F_Scores.loc['2013-06-01':]
 # nan_counts = F_Scores.isna().sum(axis=1)
 
 Price_Data = \
-    yf.download(tickers, F_Scores.index[0], F_Scores.index[-1] + pd.DateOffset(months=1) + pd.DateOffset(days=1),
+    yf.download(F_Scores.columns.to_list(), F_Scores.index[0] - pd.DateOffset(months=2), F_Scores.index[-1] + pd.DateOffset(months=1) + pd.DateOffset(days=1),
                 interval='1mo', auto_adjust=True)['Close']
 
 Returns = Price_Data.pct_change().shift(1)
