@@ -1,22 +1,18 @@
 import math
 import numpy as np
 import pandas as pd
-import statsmodels.formula.api as smf
 
-df = pd.DataFrame({'a': [1, 3, 5, 7, 4, 5, 6, 4, 7, 8, 9],
-                   'b': [3, 5, 6, 2, 4, 6, 7, 8, 7, 8, 9]})
 
-reg = smf.ols('a ~ 1', data=df).fit(cov_type='HAC', cov_kwds={'maxlags': math.floor(4 * (len(df) / 100) ** (2 / 9))})
-print(reg.summary())
+def Newey_West(y, X):
+    """
+    Return Newey-West adjusted t-value
+    """
+    y: np.ndarray
+    X: np.ndarray
 
-intercept = np.ones_like(df['a'])
-
-def Newey_West_t_stat(y, X):
-    if isinstance(y, np.ndarray):
-        y = np.array(y)
-    # X = np.column_stack((np.ones(X.shape[0]), X))
     T = len(y)
     J = math.floor(4*(T/100)**(2/9))
+
     if X.ndim <= 1:
         beta = 1/(X.T @ X) * X.T @ y
         y_hat = X * beta
