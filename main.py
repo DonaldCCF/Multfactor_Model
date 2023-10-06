@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import config, json
-from iex import IEXStock
+from iex_data import IEXStock
 import pandas as pd
 import yfinance as yf
 import itertools
