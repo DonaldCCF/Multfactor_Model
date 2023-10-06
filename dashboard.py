@@ -12,7 +12,7 @@ tickers = pd.read_csv('stock_list.csv')
 class Stock:
     def __init__(self, symbol):
         self.symbol = symbol
-        self.stock = IEXStock(config.IEX_TOKEN, self.symbol)
+        self.stock = IEXStock(config.IEX_TOKEN, 'AAPL')
         self.fundamentals = self.stock.get_fundamentals()
         self.income_statement = self.stock.get_income_statement()
         self.balance_sheet = self.stock.get_balance_sheet()
@@ -74,8 +74,9 @@ class Stock:
 
 
 f_scores = []
-
-for ticker in tickers.Symbol.to_list():
+# with open('f_scores.pkl', 'rb') as f:
+#     f_scores = pickle.load(f)
+for ticker in tickers.Symbol.to_list()[6898:]:
     print(ticker)
     try:
         stock = Stock(symbol=ticker)
@@ -135,6 +136,8 @@ for i in range(len(Returns) - 1):
         group_f, group_s = combo
         groups = merged_df['Stock'][(merged_df['Group_F'] == group_f) & (merged_df['Group_S'] == group_s)].to_list()
         Group_Return[combo].append(Returns.iloc[i+1][groups].mean())
+
+
 
 mean_values = {key: np.mean([x for x in value if x is not np.nan]) for key, value in Group_Return.items()}
 values = np.array(list(mean_values.values()))*100
