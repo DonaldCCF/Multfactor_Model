@@ -6,6 +6,7 @@ from iex_data import IEXStock
 import pandas as pd
 import yfinance as yf
 import itertools
+from newey_west import Newey_West
 
 tickers = pd.read_csv('Data/stock_list.csv')
 
@@ -86,15 +87,16 @@ for ticker in tickers.Symbol.to_list()[6898:]:
         print(e)
 
 
-# F_Scores = pd.read_csv('mid-mega-F_Scores.csv', index_col=0, parse_dates=True)
+# F_Scores = pd.read_csv('Data/All_F_Scores.csv', index_col=0, parse_dates=True)
 F_Scores = pd.DataFrame(f_scores).T
 F_Scores.fillna(method='ffill', limit=10, inplace=True)
-F_Scores = F_Scores.loc['2013-06-01':]
+F_Scores = F_Scores.loc['2013-06-01':'2023-10-01']
 
 # nan_counts = F_Scores.isna().sum(axis=1)
 
 Price_Data = yf.download(F_Scores.columns.to_list(), F_Scores.index[0] - pd.DateOffset(months=2), F_Scores.index[-1] +
                          pd.DateOffset(months=1) + pd.DateOffset(days=1), interval='1mo', auto_adjust=True)['Close']
+Price_Data = Price_Data[Price_Data.index.day == 1]
 
 Returns = Price_Data.pct_change().shift(1)
 Returns = Returns.loc['2013-06-01':]
@@ -116,11 +118,8 @@ for i in range(len(Returns) - 1):
     bins = [-1, 3, 6, 9]
     f_groups = pd.cut(F_Scores.iloc[i], bins, labels=Group_F)
     grouped_stocks = F_Scores.iloc[i].groupby(f_groups)
-    # grouped_stocks = pd.DataFrame(F_Scores.iloc[i])
-    # grouped_stocks.columns = ['values']
-    # grouped_stocks = grouped_stocks.groupby('values')
     for group, stocks in grouped_stocks:
-        f_stocks_dict[Group_F[int(group)]] = stocks.index.tolist()
+        f_stocks_dict[group] = stocks.index.tolist()
 
     f_stocks_df = pd.DataFrame.from_dict(f_stocks_dict, orient='index').transpose()
     str_stocks_df = pd.DataFrame.from_dict(str_stocks_dict, orient='index').transpose()
@@ -137,11 +136,9 @@ for i in range(len(Returns) - 1):
         groups = merged_df['Stock'][(merged_df['Group_F'] == group_f) & (merged_df['Group_S'] == group_s)].to_list()
         Group_Return[combo].append(Returns.iloc[i+1][groups].mean())
 
-
-
 mean_values = {key: np.mean([x for x in value if x is not np.nan]) for key, value in Group_Return.items()}
 values = np.array(list(mean_values.values()))*100
-values = values.reshape((10, 5)).T
+values = values.reshape((3, 5)).T
 
 left_minus_right = values[:, 2] - values[:, 0]
 new_values = np.column_stack((values, left_minus_right))
@@ -154,8 +151,13 @@ sns.heatmap(values, annot=True, fmt=".3f", cmap="gray", xticklabels=Group_F, yti
 plt.show()
 
 for combo in combinations:
-    if combo[1] == 'Loser':
-        plt.plot((1+pd.Series(Group_Return[combo], index=F_Scores.index[:-1])).cumprod(), label=combo)
-        plt.legend()
-        plt.show()
-        plt.pause(1)
+    y = np.array(Group_Return[combo])
+    print(combo, Newey_West(y, np.ones_like(y)))
+    # if combo[1] == 'Loser':
+    #     plt.plot((1+pd.Series(Group_Return[combo], index=F_Scores.index[:-1])).cumprod(), label=combo)
+    #     plt.legend()
+    #     plt.show()
+    #     plt.pause(1)
+
+plt.plot(Group_Return[('Middle', 'P2')])
+plt.show()
