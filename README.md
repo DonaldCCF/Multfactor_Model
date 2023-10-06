@@ -22,6 +22,8 @@
 
 # **Introduction**
 
+change in F_score
+
 # **Data**
 
 The original Stock Pool comprises companies listed in the S&P 500 index, representing a broad spectrum of the U.S. stock market.
