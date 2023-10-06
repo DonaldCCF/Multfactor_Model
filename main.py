@@ -87,8 +87,8 @@ for ticker in tickers.Symbol.to_list()[6898:]:
         print(e)
 
 
-# F_Scores = pd.read_csv('Data/All_F_Scores.csv', index_col=0, parse_dates=True)
-F_Scores = pd.DataFrame(f_scores).T
+F_Scores = pd.read_csv('Data/mid-mega-F_Scores.csv', index_col=0, parse_dates=True)
+# F_Scores = pd.DataFrame(f_scores).T
 F_Scores.fillna(method='ffill', limit=10, inplace=True)
 F_Scores = F_Scores.loc['2013-06-01':'2023-10-01']
 
@@ -96,7 +96,7 @@ F_Scores = F_Scores.loc['2013-06-01':'2023-10-01']
 
 Price_Data = yf.download(F_Scores.columns.to_list(), F_Scores.index[0] - pd.DateOffset(months=2), F_Scores.index[-1] +
                          pd.DateOffset(months=1) + pd.DateOffset(days=1), interval='1mo', auto_adjust=True)['Close']
-Price_Data = Price_Data[Price_Data.index.day == 1]
+# Price_Data = Price_Data[Price_Data.index.day == 1]
 
 Returns = Price_Data.pct_change().shift(1)
 Returns = Returns.loc['2013-06-01':]
@@ -147,17 +147,14 @@ low_minus_winner = values[0, :] - values[4, :]
 new_values = np.row_stack((new_values, np.append(low_minus_winner, [np.nan])))
 
 plt.figure(figsize=(10, 6))
-sns.heatmap(values, annot=True, fmt=".3f", cmap="gray", xticklabels=Group_F, yticklabels=Group_S, cbar=False)
+sns.heatmap(values, annot=True, fmt=".3f", cmap="binary", xticklabels=Group_F, yticklabels=Group_S, cbar=False)
 plt.show()
 
 for combo in combinations:
-    y = np.array(Group_Return[combo])
-    print(combo, Newey_West(y, np.ones_like(y)))
-    # if combo[1] == 'Loser':
-    #     plt.plot((1+pd.Series(Group_Return[combo], index=F_Scores.index[:-1])).cumprod(), label=combo)
-    #     plt.legend()
-    #     plt.show()
-    #     plt.pause(1)
+    # y = np.array(Group_Return[combo])
+    # print(combo, Newey_West(y, np.ones_like(y)))
+    plt.plot((1+pd.Series(Group_Return[combo], index=F_Scores.index[:-1])).cumprod(), label=combo)
+    plt.legend()
+    plt.show()
+    plt.pause(1)
 
-plt.plot(Group_Return[('Middle', 'P2')])
-plt.show()
