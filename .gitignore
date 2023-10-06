@@ -1,3 +1,2 @@
-
-.idea/misc.xml
-.idea/Multfactor_Model.iml
+*.xml
+*.iml
