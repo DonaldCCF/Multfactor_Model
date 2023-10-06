@@ -7,7 +7,7 @@ import pandas as pd
 import yfinance as yf
 import itertools
 
-tickers = pd.read_csv('stock_list.csv')
+tickers = pd.read_csv('Data/stock_list.csv')
 
 class Stock:
     def __init__(self, symbol):
